@@ -47,7 +47,7 @@ body[data-state="loading"] .widget { --accent: #b9c8dc; --accent-soft: rgba(181,
 .ambient-b { right: -70px; bottom: -100px; background: var(--accent-soft); }
 
 .titlebar { display: flex; align-items: center; justify-content: space-between; height: 39px; -webkit-app-region: drag; }
-.mode-toggle { position: absolute; z-index: 30; top: 21px; right: 174px; display: grid; place-items: center; width: 35px; height: 27px; padding: 0; border: 1px solid rgba(219, 232, 249, .18); border-radius: 10px; color: #dce5ef; background: rgba(255, 255, 255, .07); cursor: pointer; pointer-events: auto; -webkit-app-region: no-drag; }
+.mode-toggle { position: absolute; z-index: 30; top: 21px; right: 206px; display: grid; place-items: center; width: 35px; height: 27px; padding: 0; border: 1px solid rgba(219, 232, 249, .18); border-radius: 10px; color: #dce5ef; background: rgba(255, 255, 255, .07); cursor: pointer; pointer-events: auto; -webkit-app-region: no-drag; }
 .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .brand > div { display: flex; flex-direction: column; gap: 1px; }
 .brand-name { font-size: 15px; font-weight: 700; line-height: 20px; white-space: nowrap; }
@@ -83,6 +83,14 @@ body[data-state="loading"] .widget { --accent: #b9c8dc; --accent-soft: rgba(181,
 .status { display: flex; align-items: center; gap: 6px; height: 17px; padding-left: 2px; color: #bdc8d7; font-size: 10px; white-space: nowrap; }
 .status-dot { flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px var(--accent); }
 .status span:last-child { overflow: hidden; text-overflow: ellipsis; }
+.settings-panel { position: absolute; z-index: 20; top: 58px; right: 17px; bottom: 29px; left: 17px; display: none; align-content: center; gap: 9px; padding: 15px 17px; border: 1px solid rgba(219, 231, 250, .3); border-radius: 18px; background: rgba(19, 30, 45, .97); box-shadow: 0 14px 30px rgba(0, 0, 0, .32); -webkit-app-region: no-drag; }
+.settings-panel.open { display: grid; }
+.settings-title { font-size: 14px; }
+.settings-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; min-height: 30px; color: #dbe3ee; font-size: 12px; }
+.interval-control { display: flex; align-items: center; gap: 6px; }
+.interval-control input { width: 72px; height: 29px; padding: 3px 8px; border: 1px solid rgba(219, 232, 249, .25); border-radius: 8px; color: #f7f8fc; background: rgba(255, 255, 255, .08); outline: none; }
+.interval-control input:focus { border-color: var(--accent); }
+.settings-checkbox { width: 18px; height: 18px; margin: 0; accent-color: var(--accent); cursor: pointer; }
 .mini-only { display: none; }
 .resize-handle { display: none; }
 
@@ -93,6 +101,7 @@ body[data-mode="mini"] .window-actions button,
 body[data-mode="mini"] .liquid-meter,
 body[data-mode="mini"] .quota-card.slim,
 body[data-mode="mini"] .status { display: none; }
+body[data-mode="mini"] .settings-panel { display: none; }
 body[data-mode="mini"] .window-actions { position: absolute; z-index: 5; top: 7px; right: 8px; }
 body[data-mode="mini"] .mode-toggle { top: 1px; right: 2px; width: 20px; height: 20px; border-radius: 6px; font-size: 13px; pointer-events: auto; -webkit-app-region: no-drag; }
 body[data-mode="mini"] .resize-handle { position: absolute; z-index: 8; top: 0; bottom: 0; display: block; width: 6px; cursor: ew-resize; -webkit-app-region: no-drag; }

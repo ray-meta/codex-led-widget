@@ -7,6 +7,8 @@ contextBridge.exposeInMainWorld("codexQuota", {
   setAlwaysOnTop: (value) => ipcRenderer.invoke("window:alwaysOnTop:set", value),
   setMiniMode: (value, preferredWidth) => ipcRenderer.invoke("window:miniMode:set", value, preferredWidth),
   setMiniWidth: (width, edge) => ipcRenderer.invoke("window:miniWidth:set", width, edge),
+  getLaunchAtStartup: () => ipcRenderer.invoke("app:launchAtStartup:get"),
+  setLaunchAtStartup: (value) => ipcRenderer.invoke("app:launchAtStartup:set", value),
   openCodex: () => ipcRenderer.invoke("external:openCodex"),
   onRefresh: (callback) => {
     ipcRenderer.on("quota:refresh", callback);
@@ -16,5 +18,8 @@ contextBridge.exposeInMainWorld("codexQuota", {
   },
   onMiniModeChanged: (callback) => {
     ipcRenderer.on("window:miniModeChanged", (_event, value) => callback(value));
+  },
+  onLaunchAtStartupChanged: (callback) => {
+    ipcRenderer.on("app:launchAtStartupChanged", (_event, value) => callback(value));
   }
 });

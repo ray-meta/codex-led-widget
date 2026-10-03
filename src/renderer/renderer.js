@@ -8,23 +8,27 @@
     "primaryLabel", "primaryText", "primaryMiniPercent", "primaryMiniReset",
     "secondaryLabel", "secondaryText", "secondaryMiniPercent", "secondaryMiniReset",
     "planLabel", "planText", "statusText", "modeBtn", "langBtn", "pinBtn",
-    "refreshBtn", "miniRefreshBtn", "minimizeBtn", "closeBtn"
+    "refreshBtn", "miniRefreshBtn", "settingsBtn", "settingsPanel", "settingsTitle",
+    "refreshIntervalLabel", "refreshIntervalInput", "minutesUnit", "startupLabel", "startupToggle",
+    "minimizeBtn", "closeBtn"
   ].map((id) => [id, $(id)]));
 
   const copy = {
     zh: {
       brand: "Codex 额度", loading: "读取中", ready: "实时额度", warning: "额度偏低", critical: "额度用尽", error: "读取失败",
       remaining: "剩余", primary: "5小时窗口", secondary: "7天窗口", primaryMini: "5h", secondaryMini: "7d", plan: "计划",
-      refresh: "正在读取 Codex 额度...", refreshAction: "刷新额度", updated: "已更新 · 每60秒自动刷新",
+      refresh: "正在读取 Codex 额度...", refreshAction: "刷新额度", updated: (interval) => `已更新 · 每${interval}自动刷新`,
       failed: "无法读取额度", unavailable: "暂无数据", pin: "置顶", unpin: "取消置顶", enterMini: "进入 Mini 模式", exitMini: "退出 Mini 模式",
+      settings: "设置", refreshInterval: "自动刷新间隔", minuteUnit: "分钟", startup: "开机自启动",
       miniReset: (time) => `${time}后`,
       reset: (time) => `${time}后重置`, minutes: (n) => `${n}分钟`, hours: (n) => `${n}小时`, days: (n) => `${n}天`
     },
     en: {
       brand: "Codex Quota", loading: "Loading", ready: "Quota available", warning: "Running low", critical: "Quota exhausted", error: "Unavailable",
       remaining: "Remaining", primary: "5-hour window", secondary: "7-day window", primaryMini: "5h", secondaryMini: "7d", plan: "Plan",
-      refresh: "Reading Codex quota...", refreshAction: "Refresh quota", updated: "Updated · refreshes every 60s",
+      refresh: "Reading Codex quota...", refreshAction: "Refresh quota", updated: (interval) => `Updated · refreshes every ${interval}`,
       failed: "Could not read quota", unavailable: "No data", pin: "Pin", unpin: "Unpin", enterMini: "Enter Mini mode", exitMini: "Exit Mini mode",
+      settings: "Settings", refreshInterval: "Auto-refresh interval", minuteUnit: "min", startup: "Launch at startup",
       miniReset: (time) => `in ${time}`,
       reset: (time) => `resets in ${time}`, minutes: (n) => `${n}m`, hours: (n) => `${n}h`, days: (n) => `${n}d`
     }
@@ -36,10 +40,16 @@
   let loading = false;
   let alwaysOnTop = true;
   let miniMode = true;
+  let settingsOpen = false;
+  let launchAtStartup = false;
+  let refreshTimer;
   const savedMiniWidth = Number(localStorage.getItem("miniWidth")) || 185;
+  let refreshIntervalMinutes = Math.max(1, Math.min(1440, Number(localStorage.getItem("refreshIntervalMinutes")) || 1));
+  elements.refreshIntervalInput.value = String(refreshIntervalMinutes);
 
   function applyMiniMode(value) {
     miniMode = Boolean(value);
+    if (miniMode) settingsOpen = false;
     document.body.dataset.mode = miniMode ? "mini" : "full";
     (miniMode ? secondaryCard : widget).appendChild(elements.modeBtn);
     render();
@@ -87,6 +97,10 @@
     return windowData ? `${Math.max(0, Math.min(100, Number(windowData.remainingPercent) || 0))}%` : "--%";
   }
 
+  function refreshIntervalText() {
+    return language === "zh" ? copy.zh.minutes(refreshIntervalMinutes) : `${refreshIntervalMinutes} min`;
+  }
+
   function render() {
     const t = copy[language];
     const remaining = quota?.remainingPercent;
@@ -113,7 +127,7 @@
     elements.secondaryMiniReset.title = windowText(quota?.secondary);
     elements.planLabel.textContent = t.plan;
     elements.planText.textContent = quota?.planType && quota.planType !== "unknown" ? quota.planType.toUpperCase() : "--";
-    elements.statusText.textContent = loading ? t.refresh : error ? `${t.failed}: ${error}` : quota ? t.updated : t.unavailable;
+    elements.statusText.textContent = loading ? t.refresh : error ? `${t.failed}: ${error}` : quota ? t.updated(refreshIntervalText()) : t.unavailable;
     widget.title = error ? `${t.failed}: ${error}` : "";
     elements.langBtn.textContent = language === "zh" ? "EN" : "中";
     elements.modeBtn.textContent = miniMode ? "↗" : "MINI";
@@ -121,6 +135,15 @@
     elements.miniRefreshBtn.disabled = loading;
     elements.miniRefreshBtn.classList.toggle("loading", loading);
     elements.miniRefreshBtn.title = elements.miniRefreshBtn.ariaLabel = loading ? t.refresh : t.refreshAction;
+    elements.settingsBtn.classList.toggle("active", settingsOpen);
+    elements.settingsBtn.title = elements.settingsBtn.ariaLabel = t.settings;
+    elements.settingsPanel.classList.toggle("open", settingsOpen);
+    elements.settingsPanel.ariaHidden = String(!settingsOpen);
+    elements.settingsTitle.textContent = t.settings;
+    elements.refreshIntervalLabel.textContent = t.refreshInterval;
+    elements.minutesUnit.textContent = t.minuteUnit;
+    elements.startupLabel.textContent = t.startup;
+    elements.startupToggle.checked = launchAtStartup;
     elements.pinBtn.classList.toggle("active", alwaysOnTop);
     elements.pinBtn.title = elements.pinBtn.ariaLabel = alwaysOnTop ? t.unpin : t.pin;
     elements.closeBtn.title = elements.closeBtn.ariaLabel = language === "zh" ? "隐藏到托盘" : "Hide to tray";
@@ -139,6 +162,18 @@
       loading = false;
       render();
     }
+  }
+
+  function scheduleRefresh() {
+    clearTimeout(refreshTimer);
+    refreshTimer = setTimeout(async () => {
+      await refresh();
+      scheduleRefresh();
+    }, refreshIntervalMinutes * 60000);
+  }
+
+  function refreshNow() {
+    refresh().finally(scheduleRefresh);
   }
 
   elements.langBtn.addEventListener("click", () => {
@@ -170,17 +205,41 @@
     alwaysOnTop = await api.setAlwaysOnTop(!alwaysOnTop);
     render();
   });
-  elements.refreshBtn.addEventListener("click", refresh);
+  elements.refreshBtn.addEventListener("click", refreshNow);
   elements.miniRefreshBtn.addEventListener("click", (event) => {
     event.stopPropagation();
-    refresh();
+    refreshNow();
+  });
+  elements.settingsBtn.addEventListener("click", () => {
+    settingsOpen = !settingsOpen;
+    render();
+  });
+  elements.refreshIntervalInput.addEventListener("change", () => {
+    refreshIntervalMinutes = Math.max(1, Math.min(1440, Math.round(Number(elements.refreshIntervalInput.value) || 1)));
+    elements.refreshIntervalInput.value = String(refreshIntervalMinutes);
+    localStorage.setItem("refreshIntervalMinutes", String(refreshIntervalMinutes));
+    scheduleRefresh();
+    render();
+  });
+  elements.startupToggle.addEventListener("change", async () => {
+    elements.startupToggle.disabled = true;
+    try {
+      launchAtStartup = await api.setLaunchAtStartup(elements.startupToggle.checked);
+    } catch (failure) {
+      console.error("Could not update launch-at-startup setting:", failure);
+    } finally {
+      elements.startupToggle.disabled = false;
+      render();
+    }
   });
   elements.minimizeBtn.addEventListener("click", () => api.minimize());
   elements.closeBtn.addEventListener("click", () => api.minimize());
-  api.onRefresh(refresh);
+  api.onRefresh(refreshNow);
   api.onAlwaysOnTopChanged((value) => { alwaysOnTop = value; render(); });
   api.onMiniModeChanged(applyMiniMode);
+  api.onLaunchAtStartupChanged((value) => { launchAtStartup = value; render(); });
   api.getAlwaysOnTop().then((value) => { alwaysOnTop = value; render(); });
+  api.getLaunchAtStartup().then((value) => { launchAtStartup = value; render(); });
   document.body.dataset.mode = miniMode ? "mini" : "full";
   applyMiniMode(miniMode);
   api.setMiniMode(miniMode, savedMiniWidth).then(applyMiniMode);
@@ -213,7 +272,6 @@
       handle.addEventListener("pointercancel", stopResize);
     });
   }
-  setInterval(refresh, 60000);
   setInterval(render, 30000);
-  refresh();
+  refreshNow();
 })();

@@ -80,6 +80,12 @@ function rebuildTrayMenu() {
         label: isAlwaysOnTop ? "取消置顶" : "置顶",
         click: () => setAlwaysOnTop(!isAlwaysOnTop)
       },
+      {
+        label: "开机自启动",
+        type: "checkbox",
+        checked: getLaunchAtStartup(),
+        click: (item) => setLaunchAtStartup(item.checked)
+      },
       { type: "separator" },
       { label: "退出", click: () => app.quit() }
     ])
@@ -94,6 +100,27 @@ function setAlwaysOnTop(value) {
   }
   rebuildTrayMenu();
   return isAlwaysOnTop;
+}
+
+function getLoginItemOptions() {
+  return {
+    path: process.execPath,
+    ...(!app.isPackaged ? { args: [app.getAppPath()] } : {})
+  };
+}
+
+function getLaunchAtStartup() {
+  if (process.platform !== "win32") return false;
+  return app.getLoginItemSettings(getLoginItemOptions()).openAtLogin;
+}
+
+function setLaunchAtStartup(value) {
+  if (process.platform !== "win32") return false;
+  app.setLoginItemSettings({ ...getLoginItemOptions(), openAtLogin: Boolean(value) });
+  const enabled = getLaunchAtStartup();
+  mainWindow?.webContents.send("app:launchAtStartupChanged", enabled);
+  rebuildTrayMenu();
+  return enabled;
 }
 
 function setMiniMode(value, preferredWidth) {
@@ -158,6 +185,8 @@ app.whenReady().then(() => {
   ipcMain.handle("window:alwaysOnTop:set", (_event, value) => setAlwaysOnTop(value));
   ipcMain.handle("window:miniMode:set", (_event, value, preferredWidth) => setMiniMode(value, preferredWidth));
   ipcMain.handle("window:miniWidth:set", (_event, width, edge) => resizeMiniWindow(width, edge));
+  ipcMain.handle("app:launchAtStartup:get", () => getLaunchAtStartup());
+  ipcMain.handle("app:launchAtStartup:set", (_event, value) => setLaunchAtStartup(value));
   ipcMain.handle("external:openCodex", () => {
     shell.openPath(path.join(process.env.LOCALAPPDATA || "", "OpenAI", "Codex", "bin", "codex.exe"));
   });

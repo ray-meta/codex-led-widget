@@ -31,6 +31,12 @@
               <path d="M20 12a8 8 0 0 1-13.7 5.7M4 12A8 8 0 0 1 17.7 6.3M17 3v4h-4M7 21v-4h4" />
             </svg>
           </button>
+          <button id="settingsBtn" class="icon-button" title="设置" aria-label="设置">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z" />
+              <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6 1.7 1.7 0 0 0 10 3v-.2h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1z" />
+            </svg>
+          </button>
           <button id="minimizeBtn" class="icon-button" title="隐藏" aria-label="隐藏">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M5 12h14" />
@@ -45,6 +51,20 @@
       </header>
 
       <button id="modeBtn" class="mode-toggle text-button" title="切换 Mini 模式" aria-label="切换 Mini 模式">MINI</button>
+      <section id="settingsPanel" class="settings-panel" aria-hidden="true">
+        <strong id="settingsTitle" class="settings-title">设置</strong>
+        <label class="settings-row" for="refreshIntervalInput">
+          <span id="refreshIntervalLabel">自动刷新间隔</span>
+          <span class="interval-control">
+            <input id="refreshIntervalInput" type="number" min="1" max="1440" step="1" inputmode="numeric" value="1" />
+            <span id="minutesUnit">分钟</span>
+          </span>
+        </label>
+        <label class="settings-row" for="startupToggle">
+          <span id="startupLabel">开机自启动</span>
+          <input id="startupToggle" class="settings-checkbox" type="checkbox" />
+        </label>
+      </section>
       <div id="resizeLeft" class="resize-handle resize-left" aria-hidden="true"></div>
       <div id="resizeRight" class="resize-handle resize-right" aria-hidden="true"></div>
 

@@ -61,9 +61,14 @@ Codex LED Widget 是一个 Windows 桌面悬浮小组件，用于显示本机 Co
 
 - 🔄 **自动刷新额度**
   - 自动读取 Codex 使用情况
-  - 到额度重置时间后会再次刷新
+  - 可在设置中自定义自动刷新间隔（1–1440 分钟）
   - 自动查找常见安装位置中的 Codex CLI
   - 网络直连失败时可读取 Windows 系统代理并重试
+
+- ⚙️ **启动与偏好设置**
+  - 支持设置 Windows 开机自启动
+  - 刷新间隔会保存在本机，下次启动继续使用
+  - 托盘菜单也可以快速开启或关闭开机自启动
 
 - 🔐 **隐私友好**
   - 使用本机已有的 Codex 登录状态
@@ -114,6 +119,7 @@ Codex LED Widget 是一个 Windows 桌面悬浮小组件，用于显示本机 Co
    - 点击 **更多信息**
    - 点击 **仍要运行**
 6. 点击窗口中的 **MINI / FULL** 可切换显示模式；关闭窗口后可从系统托盘再次打开。
+7. 在完整模式点击齿轮按钮，可设置自动刷新间隔和开机自启动。
 
 ---
 
@@ -228,9 +234,9 @@ codex-led-widget/
 
 ## 🗺️ 后续计划
 
-* [ ] 支持自定义刷新间隔
+* [x] 支持自定义刷新间隔
 * [x] 增加系统托盘图标
-* [ ] 增加开机自启动选项
+* [x] 增加开机自启动选项
 * [ ] 增加更多小组件主题
 * [x] 增加手动刷新按钮
 * [ ] 优化错误提示
@@ -302,9 +308,15 @@ It uses a transparent liquid-glass style interface and a simple red / yellow / g
 * 🔄 **Automatic refresh**
 
   * Reads Codex usage automatically
-  * Refreshes again after the quota reset time
+  * Supports a custom auto-refresh interval from 1 to 1440 minutes
   * Finds the Codex CLI in common installation locations
   * Retries through the Windows system proxy if a direct connection fails
+
+* ⚙️ **Startup and preferences**
+
+  * Supports launching automatically when Windows starts
+  * Saves the refresh interval locally for the next launch
+  * Lets you toggle launch at startup from the tray menu as well
 
 * 🔐 **Privacy-friendly**
 
@@ -357,6 +369,7 @@ Current version: `v0.1.0`
    * Click **More info**
    * Click **Run anyway**
 6. Use **MINI / FULL** to switch views. After closing the window, reopen it from the system tray.
+7. In full mode, click the gear button to configure auto-refresh and launch at startup.
 
 ---
 
@@ -467,9 +480,9 @@ No. The widget is intended to read and display local quota status only.
 
 ## 🗺️ Roadmap
 
-* [ ] Add custom refresh interval
+* [x] Add custom refresh interval
 * [x] Add tray icon
-* [ ] Add startup on boot option
+* [x] Add startup on boot option
 * [ ] Add more widget themes
 * [x] Add manual refresh button
 * [ ] Improve error messages
