@@ -9,7 +9,7 @@
     "secondaryLabel", "secondaryText", "secondaryMiniPercent", "secondaryMiniReset",
     "planLabel", "planText", "statusText", "modeBtn", "langBtn", "pinBtn",
     "refreshBtn", "miniRefreshBtn", "settingsBtn", "settingsPanel", "settingsTitle",
-    "refreshIntervalLabel", "refreshIntervalInput", "minutesUnit", "startupLabel", "startupToggle",
+    "refreshIntervalLabel", "refreshIntervalInput", "secondsUnit", "startupLabel", "startupToggle",
     "minimizeBtn", "closeBtn"
   ].map((id) => [id, $(id)]));
 
@@ -19,7 +19,7 @@
       remaining: "剩余", primary: "5小时窗口", secondary: "7天窗口", primaryMini: "5h", secondaryMini: "7d", plan: "计划",
       refresh: "正在读取 Codex 额度...", refreshAction: "刷新额度", updated: (interval) => `已更新 · 每${interval}自动刷新`,
       failed: "无法读取额度", unavailable: "暂无数据", pin: "置顶", unpin: "取消置顶", enterMini: "进入 Mini 模式", exitMini: "退出 Mini 模式",
-      settings: "设置", refreshInterval: "自动刷新间隔", minuteUnit: "分钟", startup: "开机自启动",
+      settings: "设置", refreshInterval: "自动刷新间隔", secondUnit: "秒", startup: "开机自启动",
       miniReset: (time) => `${time}后`,
       reset: (time) => `${time}后重置`, minutes: (n) => `${n}分钟`, hours: (n) => `${n}小时`, days: (n) => `${n}天`
     },
@@ -28,7 +28,7 @@
       remaining: "Remaining", primary: "5-hour window", secondary: "7-day window", primaryMini: "5h", secondaryMini: "7d", plan: "Plan",
       refresh: "Reading Codex quota...", refreshAction: "Refresh quota", updated: (interval) => `Updated · refreshes every ${interval}`,
       failed: "Could not read quota", unavailable: "No data", pin: "Pin", unpin: "Unpin", enterMini: "Enter Mini mode", exitMini: "Exit Mini mode",
-      settings: "Settings", refreshInterval: "Auto-refresh interval", minuteUnit: "min", startup: "Launch at startup",
+      settings: "Settings", refreshInterval: "Auto-refresh interval", secondUnit: "sec", startup: "Launch at startup",
       miniReset: (time) => `in ${time}`,
       reset: (time) => `resets in ${time}`, minutes: (n) => `${n}m`, hours: (n) => `${n}h`, days: (n) => `${n}d`
     }
@@ -44,8 +44,10 @@
   let launchAtStartup = false;
   let refreshTimer;
   const savedMiniWidth = Number(localStorage.getItem("miniWidth")) || 185;
-  let refreshIntervalMinutes = Math.max(1, Math.min(1440, Number(localStorage.getItem("refreshIntervalMinutes")) || 1));
-  elements.refreshIntervalInput.value = String(refreshIntervalMinutes);
+  const savedIntervalSeconds = Number(localStorage.getItem("refreshIntervalSeconds"));
+  const legacyIntervalMinutes = Number(localStorage.getItem("refreshIntervalMinutes"));
+  let refreshIntervalSeconds = Math.max(1, Math.min(86400, savedIntervalSeconds || legacyIntervalMinutes * 60 || 60));
+  elements.refreshIntervalInput.value = String(refreshIntervalSeconds);
 
   function applyMiniMode(value) {
     miniMode = Boolean(value);
@@ -98,7 +100,7 @@
   }
 
   function refreshIntervalText() {
-    return language === "zh" ? copy.zh.minutes(refreshIntervalMinutes) : `${refreshIntervalMinutes} min`;
+    return language === "zh" ? `${refreshIntervalSeconds}秒` : `${refreshIntervalSeconds}s`;
   }
 
   function render() {
@@ -141,7 +143,7 @@
     elements.settingsPanel.ariaHidden = String(!settingsOpen);
     elements.settingsTitle.textContent = t.settings;
     elements.refreshIntervalLabel.textContent = t.refreshInterval;
-    elements.minutesUnit.textContent = t.minuteUnit;
+    elements.secondsUnit.textContent = t.secondUnit;
     elements.startupLabel.textContent = t.startup;
     elements.startupToggle.checked = launchAtStartup;
     elements.pinBtn.classList.toggle("active", alwaysOnTop);
@@ -169,7 +171,7 @@
     refreshTimer = setTimeout(async () => {
       await refresh();
       scheduleRefresh();
-    }, refreshIntervalMinutes * 60000);
+    }, refreshIntervalSeconds * 1000);
   }
 
   function refreshNow() {
@@ -215,9 +217,10 @@
     render();
   });
   elements.refreshIntervalInput.addEventListener("change", () => {
-    refreshIntervalMinutes = Math.max(1, Math.min(1440, Math.round(Number(elements.refreshIntervalInput.value) || 1)));
-    elements.refreshIntervalInput.value = String(refreshIntervalMinutes);
-    localStorage.setItem("refreshIntervalMinutes", String(refreshIntervalMinutes));
+    refreshIntervalSeconds = Math.max(1, Math.min(86400, Math.round(Number(elements.refreshIntervalInput.value) || 1)));
+    elements.refreshIntervalInput.value = String(refreshIntervalSeconds);
+    localStorage.setItem("refreshIntervalSeconds", String(refreshIntervalSeconds));
+    localStorage.removeItem("refreshIntervalMinutes");
     scheduleRefresh();
     render();
   });

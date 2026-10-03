@@ -61,7 +61,7 @@ Codex LED Widget 是一个 Windows 桌面悬浮小组件，用于显示本机 Co
 
 - 🔄 **自动刷新额度**
   - 自动读取 Codex 使用情况
-  - 可在设置中自定义自动刷新间隔（1–1440 分钟）
+  - 可在设置中自定义自动刷新间隔（1–86400 秒）
   - 自动查找常见安装位置中的 Codex CLI
   - 网络直连失败时可读取 Windows 系统代理并重试
 
@@ -308,7 +308,7 @@ It uses a transparent liquid-glass style interface and a simple red / yellow / g
 * 🔄 **Automatic refresh**
 
   * Reads Codex usage automatically
-  * Supports a custom auto-refresh interval from 1 to 1440 minutes
+  * Supports a custom auto-refresh interval from 1 to 86400 seconds
   * Finds the Codex CLI in common installation locations
   * Retries through the Windows system proxy if a direct connection fails
 
