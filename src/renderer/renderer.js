@@ -8,14 +8,14 @@
     "primaryLabel", "primaryText", "primaryMiniPercent", "primaryMiniReset",
     "secondaryLabel", "secondaryText", "secondaryMiniPercent", "secondaryMiniReset",
     "planLabel", "planText", "statusText", "modeBtn", "langBtn", "pinBtn",
-    "refreshBtn", "minimizeBtn", "closeBtn"
+    "refreshBtn", "miniRefreshBtn", "minimizeBtn", "closeBtn"
   ].map((id) => [id, $(id)]));
 
   const copy = {
     zh: {
       brand: "Codex 额度", loading: "读取中", ready: "实时额度", warning: "额度偏低", critical: "额度用尽", error: "读取失败",
       remaining: "剩余", primary: "5小时窗口", secondary: "7天窗口", primaryMini: "5h", secondaryMini: "7d", plan: "计划",
-      refresh: "正在读取 Codex 额度...", updated: "已更新 · 每60秒自动刷新",
+      refresh: "正在读取 Codex 额度...", refreshAction: "刷新额度", updated: "已更新 · 每60秒自动刷新",
       failed: "无法读取额度", unavailable: "暂无数据", pin: "置顶", unpin: "取消置顶", enterMini: "进入 Mini 模式", exitMini: "退出 Mini 模式",
       miniReset: (time) => `${time}后`,
       reset: (time) => `${time}后重置`, minutes: (n) => `${n}分钟`, hours: (n) => `${n}小时`, days: (n) => `${n}天`
@@ -23,7 +23,7 @@
     en: {
       brand: "Codex Quota", loading: "Loading", ready: "Quota available", warning: "Running low", critical: "Quota exhausted", error: "Unavailable",
       remaining: "Remaining", primary: "5-hour window", secondary: "7-day window", primaryMini: "5h", secondaryMini: "7d", plan: "Plan",
-      refresh: "Reading Codex quota...", updated: "Updated · refreshes every 60s",
+      refresh: "Reading Codex quota...", refreshAction: "Refresh quota", updated: "Updated · refreshes every 60s",
       failed: "Could not read quota", unavailable: "No data", pin: "Pin", unpin: "Unpin", enterMini: "Enter Mini mode", exitMini: "Exit Mini mode",
       miniReset: (time) => `in ${time}`,
       reset: (time) => `resets in ${time}`, minutes: (n) => `${n}m`, hours: (n) => `${n}h`, days: (n) => `${n}d`
@@ -118,6 +118,9 @@
     elements.langBtn.textContent = language === "zh" ? "EN" : "中";
     elements.modeBtn.textContent = miniMode ? "↗" : "MINI";
     elements.modeBtn.title = elements.modeBtn.ariaLabel = miniMode ? t.exitMini : t.enterMini;
+    elements.miniRefreshBtn.disabled = loading;
+    elements.miniRefreshBtn.classList.toggle("loading", loading);
+    elements.miniRefreshBtn.title = elements.miniRefreshBtn.ariaLabel = loading ? t.refresh : t.refreshAction;
     elements.pinBtn.classList.toggle("active", alwaysOnTop);
     elements.pinBtn.title = elements.pinBtn.ariaLabel = alwaysOnTop ? t.unpin : t.pin;
     elements.closeBtn.title = elements.closeBtn.ariaLabel = language === "zh" ? "隐藏到托盘" : "Hide to tray";
@@ -168,6 +171,10 @@
     render();
   });
   elements.refreshBtn.addEventListener("click", refresh);
+  elements.miniRefreshBtn.addEventListener("click", (event) => {
+    event.stopPropagation();
+    refresh();
+  });
   elements.minimizeBtn.addEventListener("click", () => api.minimize());
   elements.closeBtn.addEventListener("click", () => api.minimize());
   api.onRefresh(refresh);

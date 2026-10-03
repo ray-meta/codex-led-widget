@@ -45,6 +45,7 @@ Codex LED Widget 是一个 Windows 桌面悬浮小组件，用于显示本机 Co
   - 默认以 Mini 模式启动，同时显示 5 小时和 7 天额度
   - 可在 Mini 与完整视图之间快速切换
   - Mini 窗口支持从左右两侧拖动调整宽度
+  - 5 小时额度行提供一键刷新按钮
 
 - 🧰 **系统托盘控制**
   - 关闭窗口时隐藏到系统托盘，额度监控继续运行
@@ -281,6 +282,7 @@ It uses a transparent liquid-glass style interface and a simple red / yellow / g
   * Starts in Mini mode with both the 5-hour and 7-day quotas visible
   * Switch between Mini and full views at any time
   * Resize the Mini window by dragging either side
+  * Refresh quota directly from the 5-hour row
 
 * 🧰 **System tray controls**
 
