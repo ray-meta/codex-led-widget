@@ -41,6 +41,15 @@ Codex LED Widget 是一个 Windows 桌面悬浮小组件，用于显示本机 Co
   - 简洁、高颜值
   - 不遮挡正常开发工作
 
+- ⚡ **Mini 紧凑模式**
+  - 默认以 Mini 模式启动，同时显示 5 小时和 7 天额度
+  - 可在 Mini 与完整视图之间快速切换
+  - Mini 窗口支持从左右两侧拖动调整宽度
+
+- 🧰 **系统托盘控制**
+  - 关闭窗口时隐藏到系统托盘，额度监控继续运行
+  - 托盘菜单支持显示/隐藏、刷新额度、切换 Mini 模式和退出应用
+
 - 📌 **支持置顶**
   - 可以让小组件始终显示在其他窗口上方
   - 不需要时也可以取消置顶
@@ -52,6 +61,8 @@ Codex LED Widget 是一个 Windows 桌面悬浮小组件，用于显示本机 Co
 - 🔄 **自动刷新额度**
   - 自动读取 Codex 使用情况
   - 到额度重置时间后会再次刷新
+  - 自动查找常见安装位置中的 Codex CLI
+  - 网络直连失败时可读取 Windows 系统代理并重试
 
 - 🔐 **隐私友好**
   - 使用本机已有的 Codex 登录状态
@@ -101,6 +112,7 @@ Codex LED Widget 是一个 Windows 桌面悬浮小组件，用于显示本机 Co
 5. 如果 Windows 提示未知发布者：
    - 点击 **更多信息**
    - 点击 **仍要运行**
+6. 点击窗口中的 **MINI / FULL** 可切换显示模式；关闭窗口后可从系统托盘再次打开。
 
 ---
 
@@ -137,7 +149,7 @@ Codex LED Widget 设计目标是本地化、轻量、隐私友好。
 ```bash
 git clone https://github.com/ray-meta/codex-led-widget.git
 cd codex-led-widget
-````
+```
 
 安装依赖：
 
@@ -172,7 +184,8 @@ npm run build
 ```txt
 codex-led-widget/
 ├─ assets/          # 截图和图片资源
-├─ src/             # Electron 应用源码
+├─ scripts/         # 图标生成和 Windows 打包脚本
+├─ src/             # Electron 应用源码和应用图标
 ├─ package.json     # 项目配置和打包脚本
 └─ README.md
 ```
@@ -215,10 +228,10 @@ codex-led-widget/
 ## 🗺️ 后续计划
 
 * [ ] 支持自定义刷新间隔
-* [ ] 增加系统托盘图标
+* [x] 增加系统托盘图标
 * [ ] 增加开机自启动选项
 * [ ] 增加更多小组件主题
-* [ ] 增加手动刷新按钮
+* [x] 增加手动刷新按钮
 * [ ] 优化错误提示
 * [ ] 优化 Codex 未登录时的提示
 
@@ -229,7 +242,8 @@ codex-led-widget/
 欢迎提交 Issue 和 Pull Request。
 
 如果你发现 Bug、有功能建议，或者想改进界面，可以直接打开一个 Issue。
-支持：hkkangzhuo@qq.com
+支持：zziamalei@gmail.com
+
 ---
 
 ## 📄 开源协议
@@ -262,6 +276,17 @@ It uses a transparent liquid-glass style interface and a simple red / yellow / g
   * Clean and minimal visual style
   * Small enough to stay out of your way while coding
 
+* ⚡ **Compact Mini mode**
+
+  * Starts in Mini mode with both the 5-hour and 7-day quotas visible
+  * Switch between Mini and full views at any time
+  * Resize the Mini window by dragging either side
+
+* 🧰 **System tray controls**
+
+  * Closing the window hides it in the system tray while monitoring continues
+  * Show or hide the window, refresh quota, switch modes, or exit from the tray menu
+
 * 📌 **Always-on-top support**
 
   * Pin the widget above other windows
@@ -276,6 +301,8 @@ It uses a transparent liquid-glass style interface and a simple red / yellow / g
 
   * Reads Codex usage automatically
   * Refreshes again after the quota reset time
+  * Finds the Codex CLI in common installation locations
+  * Retries through the Windows system proxy if a direct connection fails
 
 * 🔐 **Privacy-friendly**
 
@@ -327,6 +354,7 @@ Current version: `v0.1.0`
 
    * Click **More info**
    * Click **Run anyway**
+6. Use **MINI / FULL** to switch views. After closing the window, reopen it from the system tray.
 
 ---
 
@@ -396,7 +424,8 @@ The output file will be generated in the `dist` folder.
 ```txt
 codex-led-widget/
 ├─ assets/          # Screenshots and images
-├─ src/             # Electron app source code
+├─ scripts/         # Icon generation and Windows packaging scripts
+├─ src/             # Electron app source code and application icons
 ├─ package.json     # Project config and build scripts
 └─ README.md
 ```
@@ -437,10 +466,10 @@ No. The widget is intended to read and display local quota status only.
 ## 🗺️ Roadmap
 
 * [ ] Add custom refresh interval
-* [ ] Add tray icon
+* [x] Add tray icon
 * [ ] Add startup on boot option
 * [ ] Add more widget themes
-* [ ] Add manual refresh button
+* [x] Add manual refresh button
 * [ ] Improve error messages
 * [ ] Add better error handling when Codex is not signed in
 
@@ -451,12 +480,10 @@ No. The widget is intended to read and display local quota status only.
 Issues and pull requests are welcome.
 
 If you find a bug, have a feature request, or want to improve the UI, feel free to open an issue.
-support:hkkangzhuo@qq.com
+Support: zziamalei@gmail.com
+
 ---
 
 ## 📄 License
 
 MIT License
-
-```
-```
