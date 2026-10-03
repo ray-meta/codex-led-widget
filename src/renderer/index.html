@@ -36,13 +36,17 @@
               <path d="M5 12h14" />
             </svg>
           </button>
-          <button id="closeBtn" class="icon-button danger" title="退出" aria-label="退出">
+          <button id="closeBtn" class="icon-button danger" title="隐藏到托盘" aria-label="隐藏到托盘">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M6 6l12 12M18 6 6 18" />
             </svg>
           </button>
         </div>
       </header>
+
+      <button id="modeBtn" class="mode-toggle text-button" title="切换 Mini 模式" aria-label="切换 Mini 模式">MINI</button>
+      <div id="resizeLeft" class="resize-handle resize-left" aria-hidden="true"></div>
+      <div id="resizeRight" class="resize-handle resize-right" aria-hidden="true"></div>
 
       <section class="content">
         <div id="liquidMeter" class="liquid-meter" aria-label="Codex 剩余额度">
@@ -61,11 +65,15 @@
         <div class="quota-panel">
           <div class="quota-card primary">
             <span id="primaryLabel">5小时窗口</span>
-            <strong id="primaryText">--</strong>
+            <strong id="primaryText" class="full-value">--</strong>
+            <strong id="primaryMiniPercent" class="mini-only">--%</strong>
+            <span id="primaryMiniReset" class="mini-only mini-reset">--</span>
           </div>
           <div class="quota-card">
             <span id="secondaryLabel">7天窗口</span>
-            <strong id="secondaryText">--</strong>
+            <strong id="secondaryText" class="full-value">--</strong>
+            <strong id="secondaryMiniPercent" class="mini-only">--%</strong>
+            <span id="secondaryMiniReset" class="mini-only mini-reset">--</span>
           </div>
           <div class="quota-card slim">
             <span id="planLabel">计划</span>

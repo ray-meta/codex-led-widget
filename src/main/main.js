@@ -1,22 +1,30 @@
-const { app, BrowserWindow, ipcMain, shell, Tray, Menu, nativeImage, screen } = require("electron");
+const { app, BrowserWindow, ipcMain, shell, Tray, Menu, screen } = require("electron");
 const path = require("node:path");
 const { getQuota } = require("./quota-service");
 
 let mainWindow;
 let tray;
+let isQuitting = false;
 let isAlwaysOnTop = true;
+let isMiniMode = true;
+const WINDOW_SIZES = { full: { width: 390, height: 236 }, mini: { width: 185, height: 60 } };
+const MINI_MIN_WIDTH = 170;
+const MINI_MAX_WIDTH = 420;
+let miniWidth = WINDOW_SIZES.mini.width;
+const iconPath = path.join(__dirname, "../assets/icon.ico");
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 390,
-    height: 236,
-    minWidth: 390,
-    minHeight: 236,
+    icon: iconPath,
+    width: WINDOW_SIZES.mini.width,
+    height: WINDOW_SIZES.mini.height,
+    minWidth: MINI_MIN_WIDTH,
+    minHeight: WINDOW_SIZES.mini.height,
     frame: false,
     transparent: true,
     resizable: false,
     alwaysOnTop: isAlwaysOnTop,
-    skipTaskbar: false,
+    skipTaskbar: true,
     show: false,
     backgroundColor: "#00000000",
     webPreferences: {
@@ -27,9 +35,17 @@ function createWindow() {
   });
 
   mainWindow.loadFile(path.join(__dirname, "../renderer/index.html"));
+  mainWindow.on("resize", () => {
+    if (isMiniMode) miniWidth = mainWindow.getBounds().width;
+  });
+  mainWindow.on("close", (event) => {
+    if (isQuitting) return;
+    event.preventDefault();
+    mainWindow.hide();
+  });
   mainWindow.once("ready-to-show", () => {
-    mainWindow.show();
     placeWindowTopRight();
+    mainWindow.show();
   });
 }
 
@@ -47,10 +63,7 @@ function placeWindowTopRight() {
 }
 
 function createTray() {
-  const icon = nativeImage.createFromDataURL(
-    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAK0lEQVR42mNk+M9Qz0AEYBxVSFUBCzAyMjL8Z2BgYJjFqIGjBo4aOAIAgV4EfpO0k7EAAAAASUVORK5CYII="
-  );
-  tray = new Tray(icon);
+  tray = new Tray(iconPath);
   tray.setToolTip("Codex Quota Widget");
   rebuildTrayMenu();
   tray.on("click", toggleWindow);
@@ -62,6 +75,7 @@ function rebuildTrayMenu() {
     Menu.buildFromTemplate([
       { label: "显示/隐藏", click: toggleWindow },
       { label: "刷新额度", click: () => mainWindow?.webContents.send("quota:refresh") },
+      { label: isMiniMode ? "退出 Mini 模式" : "进入 Mini 模式", click: () => setMiniMode(!isMiniMode) },
       {
         label: isAlwaysOnTop ? "取消置顶" : "置顶",
         click: () => setAlwaysOnTop(!isAlwaysOnTop)
@@ -82,6 +96,47 @@ function setAlwaysOnTop(value) {
   return isAlwaysOnTop;
 }
 
+function setMiniMode(value, preferredWidth) {
+  const nextMiniMode = Boolean(value);
+  if (mainWindow) {
+    const bounds = mainWindow.getBounds();
+    if (isMiniMode) miniWidth = bounds.width;
+    if (Number.isFinite(preferredWidth)) {
+      miniWidth = Math.max(MINI_MIN_WIDTH, Math.min(MINI_MAX_WIDTH, Math.round(preferredWidth)));
+    }
+    const size = nextMiniMode ? { width: miniWidth, height: WINDOW_SIZES.mini.height } : WINDOW_SIZES.full;
+    const workArea = screen.getDisplayMatching(bounds).workArea;
+    isMiniMode = nextMiniMode;
+    mainWindow.setBounds({
+      x: Math.max(workArea.x, Math.min(bounds.x + bounds.width - size.width, workArea.x + workArea.width - size.width)),
+      y: Math.max(workArea.y, Math.min(bounds.y, workArea.y + workArea.height - size.height)),
+      ...size
+    });
+    mainWindow.webContents.send("window:miniModeChanged", isMiniMode);
+  } else {
+    isMiniMode = nextMiniMode;
+  }
+  rebuildTrayMenu();
+  return isMiniMode;
+}
+
+function resizeMiniWindow(requestedWidth, edge) {
+  if (!mainWindow || !isMiniMode || !Number.isFinite(requestedWidth)) return miniWidth;
+  const bounds = mainWindow.getBounds();
+  const width = Math.max(MINI_MIN_WIDTH, Math.min(MINI_MAX_WIDTH, Math.round(requestedWidth)));
+  const workArea = screen.getDisplayMatching(bounds).workArea;
+  const right = bounds.x + bounds.width;
+  const x = edge === "left" ? right - width : bounds.x;
+  miniWidth = width;
+  mainWindow.setBounds({
+    x: Math.max(workArea.x, Math.min(x, workArea.x + workArea.width - width)),
+    y: bounds.y,
+    width,
+    height: WINDOW_SIZES.mini.height
+  });
+  return width;
+}
+
 function toggleWindow() {
   if (!mainWindow) return;
   if (mainWindow.isVisible()) {
@@ -93,14 +148,16 @@ function toggleWindow() {
 }
 
 app.whenReady().then(() => {
+  app.setAppUserModelId("cn.codex.quota.widget");
   createWindow();
   createTray();
 
   ipcMain.handle("quota:get", async () => getQuota());
   ipcMain.handle("window:minimize", () => mainWindow?.hide());
-  ipcMain.handle("window:close", () => app.quit());
   ipcMain.handle("window:alwaysOnTop:get", () => isAlwaysOnTop);
   ipcMain.handle("window:alwaysOnTop:set", (_event, value) => setAlwaysOnTop(value));
+  ipcMain.handle("window:miniMode:set", (_event, value, preferredWidth) => setMiniMode(value, preferredWidth));
+  ipcMain.handle("window:miniWidth:set", (_event, width, edge) => resizeMiniWindow(width, edge));
   ipcMain.handle("external:openCodex", () => {
     shell.openPath(path.join(process.env.LOCALAPPDATA || "", "OpenAI", "Codex", "bin", "codex.exe"));
   });
@@ -110,6 +167,6 @@ app.whenReady().then(() => {
   });
 });
 
-app.on("window-all-closed", (event) => {
-  event.preventDefault();
+app.on("before-quit", () => {
+  isQuitting = true;
 });

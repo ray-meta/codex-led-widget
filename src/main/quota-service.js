@@ -1,4 +1,4 @@
-const { spawn } = require("node:child_process");
+const { spawn, execFileSync } = require("node:child_process");
 const fs = require("node:fs");
 const path = require("node:path");
 
@@ -6,20 +6,61 @@ const DEFAULT_TIMEOUT_MS = 12000;
 
 function resolveCodexPath() {
   const localAppData = process.env.LOCALAPPDATA || "";
-  const candidates = [
-    process.env.CODEX_CLI_PATH,
-    path.join(localAppData, "OpenAI", "Codex", "bin", "codex.exe")
+  const nativePackage = process.arch === "arm64" ? "codex-win32-arm64" : "codex-win32-x64";
+  const nativeTarget = process.arch === "arm64" ? "aarch64-pc-windows-msvc" : "x86_64-pc-windows-msvc";
+  const nativeFromPackage = (packageRoot) => path.join(
+    packageRoot, "node_modules", "@openai", nativePackage,
+    "vendor", nativeTarget, "bin", "codex.exe"
+  );
+  const candidates = [process.env.CODEX_CLI_PATH];
+  if (localAppData) {
+    candidates.push(path.join(localAppData, "OpenAI", "Codex", "bin", "codex.exe"));
+  }
+
+  // Explorer may have an older PATH and will not inherit Codex session variables.
+  // Check the usual npm installation roots before relying on PATH.
+  const npmRoots = [
+    process.env.CODEX_MANAGED_PACKAGE_ROOT,
+    process.env.APPDATA && path.join(process.env.APPDATA, "npm", "node_modules", "@openai", "codex"),
+    process.env.ProgramFiles && path.join(process.env.ProgramFiles, "nodejs", "node_modules", "@openai", "codex"),
+    process.env["ProgramFiles(x86)"] && path.join(process.env["ProgramFiles(x86)"], "nodejs", "node_modules", "@openai", "codex"),
+    process.env.NVM_SYMLINK && path.join(process.env.NVM_SYMLINK, "node_modules", "@openai", "codex")
   ].filter(Boolean);
+  for (const root of npmRoots) candidates.push(nativeFromPackage(root));
+
+  for (const directory of (process.env.PATH || "").split(path.delimiter)) {
+    if (!directory) continue;
+    candidates.push(path.join(directory, "codex.exe"));
+    const shim = path.join(directory, "codex.cmd");
+    if (fs.existsSync(shim)) {
+      // npm installs codex.cmd beside node_modules. nvm may expose it through a symlink.
+      try {
+        const packageRoot = path.join(path.dirname(fs.realpathSync(shim)), "node_modules", "@openai", "codex");
+        candidates.push(nativeFromPackage(packageRoot));
+      } catch {
+        // A stale shim should not prevent checking other candidates.
+      }
+    }
+  }
 
   for (const candidate of candidates) {
     if (fs.existsSync(candidate)) return candidate;
   }
 
-  return "codex";
+  throw new Error("Codex CLI executable not found. Install Codex or set CODEX_CLI_PATH.");
 }
 
 async function getQuota() {
-  const response = await requestRateLimits();
+  let response;
+  try {
+    response = await requestRateLimits();
+  } catch (error) {
+    const proxy = readWindowsProxy();
+    if (!proxy || process.env.HTTPS_PROXY || !/timed out|timeout|connect|network|resolve|dns/i.test(error.message)) {
+      throw error;
+    }
+    response = await requestRateLimits(proxy);
+  }
   const snapshot =
     response.rateLimitsByLimitId?.codex ||
     response.rateLimits ||
@@ -30,6 +71,26 @@ async function getQuota() {
   }
 
   return normalizeSnapshot(snapshot);
+}
+
+function readWindowsProxy() {
+  if (process.platform !== "win32") return null;
+  try {
+    const registry = path.join(process.env.SystemRoot || "C:\\Windows", "System32", "reg.exe");
+    const output = execFileSync(registry, [
+      "query", "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings",
+      "/v", "ProxyServer"
+    ], { encoding: "utf8", windowsHide: true, timeout: 2000 });
+    const rawValue = output.match(/ProxyServer\s+REG_SZ\s+([^\r\n]+)/i)?.[1]?.trim();
+    if (!rawValue) return null;
+    const entries = rawValue.split(";");
+    const address = entries.find((entry) => /^https=/i.test(entry))?.split("=").slice(1).join("=") ||
+      entries.find((entry) => /^http=/i.test(entry))?.split("=").slice(1).join("=") || entries[0];
+    const proxy = new URL(/^https?:\/\//i.test(address) ? address : `http://${address}`);
+    return proxy.hostname && proxy.port ? proxy.toString() : null;
+  } catch {
+    return null;
+  }
 }
 
 function firstSnapshot(map) {
@@ -74,11 +135,12 @@ function clampPercent(value) {
   return Math.max(0, Math.min(100, Math.round(value)));
 }
 
-function requestRateLimits() {
+function requestRateLimits(proxy) {
   const codexPath = resolveCodexPath();
   const child = spawn(codexPath, ["app-server", "--listen", "stdio://"], {
     stdio: ["pipe", "pipe", "pipe"],
-    windowsHide: true
+    windowsHide: true,
+    env: proxy ? { ...process.env, HTTP_PROXY: proxy, HTTPS_PROXY: proxy } : process.env
   });
 
   let buffer = "";
@@ -179,4 +241,4 @@ function handleMessage(line, pending) {
   }
 }
 
-module.exports = { getQuota, normalizeSnapshot };
+module.exports = { getQuota, normalizeSnapshot, resolveCodexPath, readWindowsProxy };
